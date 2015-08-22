@@ -5,6 +5,8 @@
 // 2010-05-20 <jc@wippler.nl>
 
 #include "EtherCard.h"
+#include <stdlib.h>
+#include <ctype.h>
 
 void EtherCard::copyIp (uint8_t *dst, const uint8_t *src) {
     memcpy(dst, src, 4);
@@ -14,6 +16,7 @@ void EtherCard::copyMac (uint8_t *dst, const uint8_t *src) {
     memcpy(dst, src, 6);
 }
 
+#ifdef ARDUINO
 void EtherCard::printIp (const char* msg, const uint8_t *buf) {
     Serial.print(msg);
     EtherCard::printIp(buf);
@@ -33,6 +36,7 @@ void EtherCard::printIp (const uint8_t *buf) {
             Serial.print('.');
     }
 }
+#endif
 
 // search for a string of the form key=value in
 // a string that looks like q?xyz=abc&uvw=defgh HTTP/1.1\r\n

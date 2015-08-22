@@ -8,12 +8,15 @@
 //
 // 2010-05-20 <jc@wippler.nl>
 
+#ifdef ARDUINO
 #if ARDUINO >= 100
 #include <Arduino.h> // Arduino 1.0
 #else
 #include <Wprogram.h> // Arduino 0022
 #endif
+#endif
 #include "enc28j60.h"
+#include <avr/io.h>
 
 uint16_t ENC28J60::bufferSize;
 bool ENC28J60::broadcast_enabled = false;
@@ -254,7 +257,7 @@ static byte Enc28j60Bank;
 static int gNextPacketPtr;
 static byte selectPin;
 
-void ENC28J60::initSPI () {
+void ENC28J60::initSPI() {
     pinMode(SS, OUTPUT);
     digitalWrite(SS, HIGH);
     pinMode(MOSI, OUTPUT);

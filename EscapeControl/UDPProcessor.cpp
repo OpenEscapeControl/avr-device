@@ -1,6 +1,4 @@
 #include "UDPProcessor.h"
-#include "ard_env.h"
-#include "uart.h"
 
 // SHOULD NOT BE < 400
 uint8_t Ethernet::buffer[BUFSIZE];
@@ -13,14 +11,10 @@ int UDPProcessor::initialize()
 {
     if(!ether.begin(sizeof Ethernet::buffer, mac_))
     {
-        uart_puts("ETHER ERROR!\n");
         return(-1);
     }
 
     dhcpInit();
-
-    uart_puts("ether init ok\n");
-    uart_printf("got IP %d.%d.%d.%d\n", ether.myip[0], ether.myip[1], ether.myip[2], ether.myip[3]);
 
     return(0);
 }

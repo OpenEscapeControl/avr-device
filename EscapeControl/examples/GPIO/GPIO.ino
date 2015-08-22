@@ -1,8 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "UDPProcessor.h"
-#include "uart.h"
-#include "ard_env.h"
 #include "UDPGPIO.h"
 
 UDPProcessor p;
@@ -13,10 +9,8 @@ void cbc(unsigned port, unsigned char ip[], const char *data, unsigned len)
         return;
 }
 
-void init()
+void setup()
 {
-    ard_env_initialize();
-
     int res = p.initialize();
     if(res)
         for(;;) {}
@@ -26,12 +20,8 @@ void init()
     sendPowerOnMessage();
 }
 
-int main()
+void loop()
 {
-    init();
-    for(;;)
-    {
-        p.update();
-        UDPGPIOIteration();
-    }
+    p.update();
+    UDPGPIOIteration();
 }

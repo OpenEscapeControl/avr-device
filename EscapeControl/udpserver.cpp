@@ -10,16 +10,8 @@
 
 #define gPB ether.buffer
 
-#define UDPSERVER_MAXLISTENERS 8    //the maximum number of port listeners.
-
-typedef struct {
-    UdpServerCallback callback;
-    uint16_t port;
-    bool listening;
-} UdpServerListener;
-
-UdpServerListener listeners[UDPSERVER_MAXLISTENERS];
-byte numListeners = 0;
+UdpServerListener EtherCard::listeners[UDPSERVER_MAXLISTENERS];
+byte EtherCard::numListeners = 0;
 
 void EtherCard::udpServerListenOnPort(UdpServerCallback callback, uint16_t port) {
     if(numListeners < UDPSERVER_MAXLISTENERS)

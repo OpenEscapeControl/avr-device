@@ -9,9 +9,10 @@
 //
 // 2010-05-19 <jc@wippler.nl>
 
-#include <EtherCard.h>
+#include "EtherCard.h"
 #include <stdarg.h>
 #include <avr/eeprom.h>
+#include <stdlib.h>
 
 //#define FLOATEMIT // uncomment line to enable $T in emit_P for float emitting
 
@@ -140,7 +141,7 @@ static char* wtoa (uint16_t value, char* ptr) {
     return ptr;
 }
 
-void Stash::prepare (PGM_P fmt, ...) {
+void Stash::prepare (PGM_P_NEW fmt, ...) {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
     *segs++ = strlen_P(fmt);
@@ -164,7 +165,7 @@ void Stash::prepare (PGM_P fmt, ...) {
                 arglen = strlen((const char*) argval);
                 break;
             case 'F':
-                arglen = strlen_P((PGM_P) argval);
+                arglen = strlen_P((PGM_P_NEW) argval);
                 break;
             case 'E': {
                 byte* s = (byte*) argval;
@@ -194,7 +195,7 @@ uint16_t Stash::length () {
 void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
-    PGM_P fmt = (PGM_P) *++segs;
+    PGM_P_NEW fmt = (PGM_P_NEW) *++segs;
     Stash stash;
     char mode = '@', tmp[7], *ptr = NULL, *out = (char*) buf;
     for (uint16_t i = 0; i < offset + count; ) {
@@ -252,7 +253,7 @@ void Stash::extract (uint16_t offset, uint16_t count, void* buf) {
 void Stash::cleanup () {
     Stash::load(0, 0);
     uint16_t* segs = Stash::bufs[0].words;
-    PGM_P fmt = (PGM_P) *++segs;
+    PGM_P_NEW fmt = (PGM_P_NEW) *++segs;
     for (;;) {
         char c = pgm_read_byte(fmt++);
         if (c == 0)
@@ -267,7 +268,7 @@ void Stash::cleanup () {
     }
 }
 
-void BufferFiller::emit_p(PGM_P fmt, ...) {
+void BufferFiller::emit_p(PGM_P_NEW fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     for (;;) {
@@ -308,7 +309,7 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
             strcpy((char*) ptr, va_arg(ap, const char*));
             break;
         case 'F': {
-            PGM_P s = va_arg(ap, PGM_P);
+            PGM_P_NEW s = va_arg(ap, PGM_P_NEW);
             char d;
             while ((d = pgm_read_byte(s++)) != 0)
                 *ptr++ = d;

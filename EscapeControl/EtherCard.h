@@ -23,20 +23,29 @@
 #ifndef EtherCard_h
 #define EtherCard_h
 
-
-#if ARDUINO >= 100
-#include <Arduino.h> // Arduino 1.0
-#define WRITE_RESULT size_t
-#define WRITE_RETURN return 1;
+#ifdef ARDUINO
+    #if ARDUINO >= 100
+    #include <Arduino.h> // Arduino 1.0
+    #define WRITE_RESULT size_t
+    #define WRITE_RETURN return 1;
+    #else
+    #include <WProgram.h> // Arduino 0022
+    #define WRITE_RESULT void
+    #define WRITE_RETURN
+    #endif
 #else
-#include <WProgram.h> // Arduino 0022
-#define WRITE_RESULT void
-#define WRITE_RETURN
+    #define WRITE_RESULT size_t
+    #define WRITE_RETURN return 1;
+
 #endif
 
 #include <avr/pgmspace.h>
 #include "enc28j60.h"
 #include "net.h"
+
+#define UDPSERVER_MAXLISTENERS 1    //the maximum number of port listeners.
+
+#define MAC_BYTES 6
 
 /** This type definition defines the structure of a UDP server event handler callback funtion */
 typedef void (*UdpServerCallback)(
@@ -44,6 +53,12 @@ typedef void (*UdpServerCallback)(
     uint8_t src_ip[4],    ///< IP address of the sender
     const char *data,   ///< UDP payload data
     uint16_t len);        ///< Length of the payload data
+
+typedef struct {
+    UdpServerCallback callback;
+    uint16_t port;
+    bool listening;
+} UdpServerListener;
 
 /** This type definition defines the structure of a DHCP Option callback funtion */
 typedef void (*DhcpOptionCallback)(
@@ -121,7 +136,7 @@ public:
     //   offs = 63;
     // }
 
-    static void prepare (PGM_P fmt, ...);
+    static void prepare (PGM_P_NEW fmt, ...);
     static uint16_t length ();
     static void extract (uint16_t offset, uint16_t count, void* buf);
     static void cleanup ();
@@ -145,7 +160,7 @@ public:
 *   | $H     | uint16_t    | Hexadecimal value of lsb (from 00 to ff)
 *   | $L     | long        | Decimal representation
 *   | $S     | const char* | Copy null terminated string from main memory
-*   | $F     | PGM_P       | Copy null terminated string from program space
+*   | $F     | PGM_P_NEW       | Copy null terminated string from program space
 *   | $E     | byte*       | Copy null terminated string from EEPROM space
 *   | $$     | _none_      | '$'
 *
@@ -190,7 +205,7 @@ public:
     *   @param  fmt Format string (see Class description)
     *   @param  ... parameters for format string
     */
-    void emit_p (PGM_P fmt, ...);
+    void emit_p (PGM_P_NEW fmt, ...);
 
     /** @brief  Add data to buffer from main memory
     *   @param  s Pointer to data
@@ -202,7 +217,7 @@ public:
     *   @param  p Program space string pointer
     *   @param  n Number of characters to copy
     */
-    void emit_raw_p (PGM_P p, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
+    void emit_raw_p (PGM_P_NEW p, uint16_t n) { memcpy_P(ptr, p, n); ptr += n; }
 
     /** @brief  Get pointer to start of buffer
     *   @return <i>uint8_t*</i> Pointer to start of buffer
@@ -237,6 +252,8 @@ public:
     static bool using_dhcp;   ///< True if using DHCP
     static bool persist_tcp_connection; ///< False to break connections on first packet received
     static int16_t delaycnt; ///< Counts number of cycles of packetLoop when no packet received - used to trigger periodic gateway ARP request
+    static UdpServerListener listeners[UDPSERVER_MAXLISTENERS];
+    static byte numListeners;
 
     // EtherCard.cpp
     /**   @brief  Initialise the network interface
@@ -246,7 +263,7 @@ public:
     *     @return <i>uint8_t</i> Firmware version or zero on failure.
     */
     static uint8_t begin (const uint16_t size, const uint8_t* macaddr,
-                          uint8_t csPin =8);
+                          uint8_t csPin = SS);
 
     /**   @brief  Configure network interface with static IP
     *     @param  my_ip IP address (4 bytes). 0 for no change.
@@ -378,6 +395,14 @@ public:
     */
     static void udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport);
 
+    /**   @brief  Prepare a UDP message for transmission
+    *     @param  sport Source port
+    *     @param  dip Pointer to 4 byte destination IP address
+    *     @param  dport Destination port
+    *     @param  dmac Destination MAC
+    */
+    static void udpPrepare (uint16_t sport, const uint8_t *dip, uint16_t dport, const uint8_t dmac[MAC_BYTES]);
+
     /**   @brief  Transmit UDP packet
     *     @param  len Size of payload
     */
@@ -392,6 +417,21 @@ public:
     */
     static void sendUdp (const char *data, uint8_t len, uint16_t sport,
                          const uint8_t *dip, uint16_t dport);
+
+    static uint8_t* getUDPPointer();
+
+    static void sendUDPPTR(uint8_t len, uint16_t sport, const uint8_t *dip, uint16_t dport, const uint8_t dmac[MAC_BYTES]);
+
+    /**   @brief  Sends a UDP packet
+    *     @param  data Pointer to data
+    *     @param  len Size of payload (maximum 220 octets / bytes)
+    *     @param  sport Source port
+    *     @param  dip Pointer to 4 byte destination IP address
+    *     @param  dport Destination port
+    *     @param  dmac Destination MAC
+    */
+    static void sendUdp (const char *data, uint8_t len, uint16_t sport,
+                         const uint8_t *dip, uint16_t dport, const uint8_t dmac[MAC_BYTES]);
 
     /**   @brief  Resister the function to handle ping events
     *     @param  cb Pointer to function
@@ -518,6 +558,7 @@ public:
     *     @param  buf Pointer to 4 byte IP address
     *     @note   There is no check of source or destination size. Ensure both are 4 bytes
     */
+#ifdef ARDUINO
     static void printIp (const uint8_t *buf);
 
     /**   @brief  Output message and IP address to serial port in dotted decimal IP format
@@ -535,6 +576,7 @@ public:
     */
     static void printIp (const __FlashStringHelper *ifsh, const uint8_t *buf);
 
+#endif
     /**   @brief  Search for a string of the form key=value in a string that looks like q?xyz=abc&uvw=defgh HTTP/1.1\\r\\n
     *     @param  str Pointer to the null terminated string to search
     *     @param  strbuf Pointer to buffer to hold null terminated result string

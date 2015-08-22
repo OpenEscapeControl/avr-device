@@ -18,13 +18,11 @@ bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
 {
     if(data[0] == CMD_GPIO_PINMODE && len >= 3)
     {
-        uart_printf("pinMode(%u, %u)\n", data[1], data[2]);
         pinMode(data[1], data[2]);
         return(1);
     }
     else if(data[0] == CMD_GPIO_DIGITALWRITE && len >= 3)
     {
-        uart_printf("digitalWrite(%u, %u)\n", data[1], data[2]);
         digitalWrite(data[1], data[2]);
         return(1);
     }

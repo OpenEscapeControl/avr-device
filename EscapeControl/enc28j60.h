@@ -10,8 +10,13 @@
 //
 // 2010-05-20 <jc@wippler.nl>
 
+#include <stdint.h>
+
 #ifndef ENC28J60_H
 #define ENC28J60_H
+
+//#define PGM_P_NEW const char* PROGMEM
+#define PGM_P_NEW PGM_P
 
 /** This class provide low-level interfacing with the ENC28J60 network interface. This is used by the EtherCard class and not intended for use by (normal) end users. */
 class ENC28J60 {

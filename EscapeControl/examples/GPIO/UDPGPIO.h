@@ -1,8 +1,6 @@
 #ifndef UDPGPIO_H
 #define UDPGPIO_H
 
-#include "ard_env.h"
-#include "uart.h"
 #include "proto_gpio.h"
 #include <inttypes.h>
 

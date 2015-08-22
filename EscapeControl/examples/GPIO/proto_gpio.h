@@ -2,6 +2,7 @@
 #define PROTO_GPIO_H
 
 #include <ctype.h>
+#include <inttypes.h>
 
 #define CMD_GPIO_PINMODE 0xC0
 #define CMD_GPIO_DIGITALWRITE 0xC1
