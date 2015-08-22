@@ -10,7 +10,7 @@ uint8_t UDPProcessor::remote_ip_[] = {192, 168, 100, 1};
 unsigned UDPProcessor::local_tx_port_ = 59001;
 
 uint8_t UDPProcessor::mac_[] = {0xAA, 0x00, 0x00, 0x00, 0x01, 0x00};
-unsigned UDPProcessor::local_rx_port_ = 0;
+unsigned UDPProcessor::local_rx_port_ = 49900;
 unsigned UDPProcessor::remote_port_ = 0;
 
 void rxCallback1(unsigned port, unsigned char ip[], const char *data, unsigned len)
@@ -19,10 +19,9 @@ void rxCallback1(unsigned port, unsigned char ip[], const char *data, unsigned l
 }
 
 
-UDPProcessor::UDPProcessor(int remote_port, int local_port, uint8_t mac_last)
+UDPProcessor::UDPProcessor(uint8_t mac_last)
 {
-    local_rx_port_ = local_port;
-    remote_port_ = remote_port;
+    remote_port_ = 49930 + mac_last;
     mac_[5] = mac_last;
 }
 

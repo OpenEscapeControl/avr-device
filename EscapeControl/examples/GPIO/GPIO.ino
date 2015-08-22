@@ -1,7 +1,7 @@
 #include "UDPProcessor.h"
 #include "UDPGPIO.h"
 
-UDPProcessor p(49931, 49900, 0x01);
+UDPProcessor p(1);
 
 void rxCallback(unsigned len, const char *data)
 {
