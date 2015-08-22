@@ -23,8 +23,8 @@ private:
 
     static void dhcpInit();
 public:
-    UDPProcessor();
-    static int initialize();
+    UDPProcessor(int remote_port, int local_port, const uint8_t mac_last);
+    static int begin();
     static void tx(const char* msg, int size);
     static void tx(const char* cstr);
     static void setCallBack(UdpServerCallback callback);

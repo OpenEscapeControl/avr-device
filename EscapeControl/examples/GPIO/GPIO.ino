@@ -1,9 +1,9 @@
 #include "UDPProcessor.h"
 #include "UDPGPIO.h"
 
-UDPProcessor p;
+UDPProcessor p(49931, 49900, 0x01);
 
-void cbc(unsigned port, unsigned char ip[], const char *data, unsigned len)
+void rxCallback(unsigned len, const char *data)
 {
     if(processCommandUDPGPIO((uint8_t*) data, len) == 1)
         return;
@@ -11,17 +11,14 @@ void cbc(unsigned port, unsigned char ip[], const char *data, unsigned len)
 
 void setup()
 {
-    int res = p.initialize();
-    if(res)
-        for(;;) {}
-    else
-        p.setCallBack(&cbc);
-
+    p.begin();
+    
     sendPowerOnMessage();
 }
 
 void loop()
 {
     p.update();
+    
     UDPGPIOIteration();
 }
