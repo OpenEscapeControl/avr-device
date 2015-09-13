@@ -19,10 +19,11 @@ void rxCallback1(unsigned port, unsigned char ip[], const char *data, unsigned l
 }
 
 
-UDPProcessor::UDPProcessor(uint8_t mac_last)
+UDPProcessor::UDPProcessor(uint8_t physical_device)
 {
-    remote_port_ = 49930 + mac_last;
-    mac_[5] = mac_last;
+    mac_[5] = 10 + physical_device;
+    remote_port_ = 20000 + physical_device;
+    local_rx_port_ = 10000 + physical_device;
 }
 
 int UDPProcessor::begin()

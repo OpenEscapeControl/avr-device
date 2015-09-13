@@ -23,7 +23,7 @@ private:
 
     static void dhcpInit();
 public:
-    UDPProcessor(const uint8_t mac_last);
+    UDPProcessor(const uint8_t physical_device);
     static int begin();
     static void tx(const char* msg, int size);
     static void tx(const char* cstr);

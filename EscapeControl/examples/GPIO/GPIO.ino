@@ -1,6 +1,8 @@
 #include "UDPProcessor.h"
 #include "UDPGPIO.h"
 
+// Set physical_device to 1
+// Slot is always 1
 UDPProcessor p(1);
 
 void rxCallback(unsigned len, const char *data)
