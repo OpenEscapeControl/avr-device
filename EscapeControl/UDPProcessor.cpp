@@ -1,4 +1,5 @@
 #include "UDPProcessor.h"
+#include <stdio.h>
 
 void rxCallback(unsigned len, const char* buf);
 
@@ -22,8 +23,11 @@ void rxCallback1(unsigned port, unsigned char ip[], const char *data, unsigned l
 UDPProcessor::UDPProcessor(uint8_t physical_device)
 {
     mac_[5] = 10 + physical_device;
-    remote_port_ = 20000 + physical_device;
-    local_rx_port_ = 10000 + physical_device;
+    char buf[10];
+    sprintf(buf, "2%02d%02d", physical_device, 1);
+    remote_port_ = atoi(buf);
+    sprintf(buf, "1%02d%02d", physical_device, 1);
+    local_rx_port_ = atoi(buf);
 }
 
 int UDPProcessor::begin()
