@@ -566,7 +566,13 @@ void OneWire::getRFIDCode(uint8_t *data)
             data[i] = read();
         }
     }
-
+    else
+    {
+        for(unsigned i = 0; i < RFID_SIZE; i++)
+        {
+            data[i] = 0x00;
+        }
+    }
 }
 
 void OneWire::UDPRFIDSend()
