@@ -80,7 +80,7 @@ long CapSense(uint8_t sendPin, uint8_t receivePin, uint8_t samples, uint8_t ms_t
     *sReg |= sBit;              // set sendpin to OUTPUT
     sei();
 
-    long total = 0;
+    total = 0;
     if (samples == 0) return 0;
 
 
