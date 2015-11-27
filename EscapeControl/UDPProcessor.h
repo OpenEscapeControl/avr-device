@@ -15,13 +15,13 @@ private:
     static unsigned local_tx_port_;
 
     static uint8_t remote_ip_[IP_BYTES];
+    static uint8_t ip_[IP_BYTES];
+    static uint8_t mask_[IP_BYTES];
     static unsigned remote_port_;
 
     static unsigned local_rx_port_;
 
     static uint16_t buffer_counter_;
-
-    static void dhcpInit();
 public:
     UDPProcessor(const uint8_t physical_device);
     static int begin();

@@ -11,6 +11,8 @@ uint8_t UDPProcessor::remote_ip_[] = {192, 168, 100, 1};
 unsigned UDPProcessor::local_tx_port_ = 59001;
 
 uint8_t UDPProcessor::mac_[] = {0xAA, 0x00, 0x00, 0x00, 0x01, 0x00};
+uint8_t UDPProcessor::ip_[] = {192, 168, 100, 10};
+uint8_t UDPProcessor::mask_[] = {255, 255, 255, 0};
 unsigned UDPProcessor::local_rx_port_ = 49900;
 unsigned UDPProcessor::remote_port_ = 0;
 
@@ -23,6 +25,7 @@ void rxCallback1(unsigned port, unsigned char ip[], const char *data, unsigned l
 UDPProcessor::UDPProcessor(uint8_t physical_device)
 {
     mac_[5] = 10 + physical_device;
+    ip_[3] = 10 + physical_device;
     char buf[10];
     sprintf(buf, "2%02d%02d", physical_device, 1);
     remote_port_ = atoi(buf);
@@ -37,7 +40,7 @@ int UDPProcessor::begin()
         return(-1);
     }
 
-    dhcpInit();
+    ether.staticSetup (ip_, NULL, NULL, mask_);
 
     setCallBack(rxCallback1);
 
@@ -72,11 +75,4 @@ uint8_t *UDPProcessor::getUDPPtr()
 void UDPProcessor::tx(int size)
 {
     ether.sendUDPPTR(size, local_tx_port_, remote_ip_, remote_port_, remote_mac_);
-}
-
-void UDPProcessor::dhcpInit()
-{
-    for(;;)
-        if(ether.dhcpSetup(hostname_))
-            return;
 }
