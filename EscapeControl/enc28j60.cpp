@@ -420,21 +420,86 @@ bool ENC28J60::isLinkUp() {
     return (readPhyByte(PHSTAT2) >> 2) & 1;
 }
 
+struct transmit_status_vector {
+    uint8_t bytes[7];
+};
+
 void ENC28J60::packetSend(uint16_t len) {
-    while (readOp(ENC28J60_READ_CTRL_REG, ECON1) & ECON1_TXRTS)
-        if (readRegByte(EIR) & EIR_TXERIF) {
-            writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
-            writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+    byte retry = 0;
+
+    while (1) {
+        // latest errata sheet: DS80349C 
+        // always reset transmit logic (Errata Issue 12)
+        // the Microchip TCP/IP stack implementation used to first check
+        // whether TXERIF is set and only then reset the transmit logic
+        // but this has been changed in later versions; possibly they
+        // have a reason for this; they don't mention this in the errata 
+        // sheet
+        writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST); 
+        writeOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF|EIR_TXIF);
+   
+        // prepare new transmission 
+        if (retry == 0) {
+            writeReg(EWRPT, TXSTART_INIT);
+            writeReg(ETXND, TXSTART_INIT+len);
+            writeOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
+            writeBuf(len, buffer);
         }
-    writeReg(EWRPT, TXSTART_INIT);
-    writeReg(ETXND, TXSTART_INIT+len);
-    writeOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
-    writeBuf(len, buffer);
-    writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
+   
+        // initiate transmission
+        writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
+
+        // wait until transmission has finished; referrring to the data sheet and 
+        // to the errata (Errata Issue 13; Example 1) you only need to wait until either 
+        // TXIF or TXERIF gets set; however this leads to hangs; apparently Microchip
+        // realized this and in later implementations of their tcp/ip stack they introduced 
+        // a counter to avoid hangs; of course they didn't update the errata sheet 
+        uint16_t count = 0;
+        while ((readRegByte(EIR) & (EIR_TXIF | EIR_TXERIF)) == 0 && ++count < 1000U)
+            ;
+   
+        if (!(readRegByte(EIR) & EIR_TXERIF) && count < 1000U) {
+            // no error; start new transmission
+            break;
+        }
+   
+        // cancel previous transmission if stuck
+        writeOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS); 
+    
+        // Check whether the chip thinks that a late collision ocurred; the chip
+        // may be wrong (Errata Issue 13); therefore we retry. We could check
+        // LATECOL in the ESTAT register in order to find out whether the chip
+        // thinks a late collision ocurred but (Errata Issue 15) tells us that
+        // this is not working. Therefore we check TSV
+        transmit_status_vector tsv;   
+        uint16_t etxnd = readReg(ETXND);
+        writeReg(ERDPT, etxnd+1);
+        readBuf(sizeof(transmit_status_vector), (byte*) &tsv);
+        // LATECOL is bit number 29 in TSV (starting from 0)
+
+        if (!((readRegByte(EIR) & EIR_TXERIF) && (tsv.bytes[3] & 1<<5) /*tsv.transmitLateCollision*/) || retry > 16U) {
+            // there was some error but no LATECOL so we do not repeat
+            break;
+        }
+        
+        retry++;
+    }
 }
 
 uint16_t ENC28J60::packetReceive() {
     uint16_t len = 0;
+    static uint16_t gNextPacketPtr = RXSTART_INIT;
+    static bool     unreleasedPacket = false;
+
+    if (unreleasedPacket) {
+        if (gNextPacketPtr == 0) 
+            writeReg(ERXRDPT, RXSTOP_INIT);
+        else
+            writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = false;
+    }
+
     if (readRegByte(EPKTCNT) > 0) {
         writeReg(ERDPT, gNextPacketPtr);
 
@@ -455,10 +520,8 @@ uint16_t ENC28J60::packetReceive() {
         else
             readBuf(len, buffer);
         buffer[len] = 0;
-        if (gNextPacketPtr - 1 > RXSTOP_INIT)
-            writeReg(ERXRDPT, RXSTOP_INIT);
-        else
-            writeReg(ERXRDPT, gNextPacketPtr - 1);
+        unreleasedPacket = true;
+
         writeOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
     }
     return len;
