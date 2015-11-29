@@ -10,6 +10,7 @@ UDPProcessor p(1);
 
 void rxCallback(unsigned len, const char *data)
 {
+    sendACK();
     if(processCommandUDPGPIO((uint8_t*) data, len) == 1)
         return;
     if(processCommandCapSense((uint8_t*) data, len) == 1)

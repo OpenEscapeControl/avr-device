@@ -12,5 +12,6 @@ extern uint8_t gpio_update_pins[GPIO_UPDATE_PINS_MAX];
 bool processCommandUDPGPIO(uint8_t* data, uint8_t len);
 void UDPGPIOIteration();
 void sendPowerOnMessage();
+void sendACK();
 
 #endif
