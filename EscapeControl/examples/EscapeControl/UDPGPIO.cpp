@@ -26,6 +26,19 @@ bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
         digitalWrite(data[1], data[2]);
         return(1);
     }
+    else if(data[0] == CMD_GPIO_TONE && len >= 3)
+    {
+        uint16_t_uint8_t_gpio uu;
+        uu.charval[0] = data[2];
+        uu.charval[1] = data[3];
+        tone(data[1], uu.intval);
+        return(1);
+    }
+    else if(data[0] == CMD_GPIO_NOTONE && len >= 2)
+    {
+        noTone(data[1]);
+        return(1);
+    }
     else if(data[0] == CMD_GPIO_DIGITALREAD && len >= 2)
     {
         uint8_t res = digitalRead(data[1]);
