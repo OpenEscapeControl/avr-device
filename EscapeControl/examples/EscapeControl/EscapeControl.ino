@@ -21,7 +21,7 @@ void rxCallback(unsigned len, const char *data)
 void setup()
 {
     p.begin();
-    
+    delay(100);
     sendPowerOnMessage();
 }
 
