@@ -3,10 +3,11 @@
 #include "UDPGPIO.h"
 #include "UDPCapSense.h"
 #include "OneWire.h"
+#include "device_n.h"
 
-// Set physical_device to 1
+// Set physical_device to device_n
 // Slot is always 1
-UDPProcessor p(1);
+UDPProcessor p(device_n);
 
 void rxCallback(unsigned len, const char *data)
 {
