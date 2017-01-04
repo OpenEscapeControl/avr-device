@@ -14,6 +14,17 @@ void sendPowerOnMessage()
     UDPProcessor::tx(1);
 }
 
+void sendACK()
+{
+    uint8_t data;
+    uint8_t* ptr = UDPProcessor::getUDPPtr();
+
+    data = *ptr;
+    *ptr = CMD_ACK;
+    UDPProcessor::tx(1);
+    *ptr = data;
+}
+
 bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
 {
     if(data[0] == CMD_GPIO_PINMODE && len >= 3)
