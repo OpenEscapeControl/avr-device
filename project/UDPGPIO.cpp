@@ -1,17 +1,50 @@
 #include "UDPGPIO.h"
 #include "UDPProcessor.h"
 #include "proto_ping.h"
+#include <strings.h>
 
-uint8_t gpio_update_pins_n = 0;
-uint8_t gpio_update_pins[GPIO_UPDATE_PINS_MAX];
-bool need_gpio_all = 1;
-unsigned long last_ms[GPIO_UPDATE_PINS_MAX];
-uint8_t last_state[GPIO_UPDATE_PINS_MAX];
+uint8_t gpio_subscribers[GPIO_UPDATE_MAX_PIN];
+unsigned long gpio_last_ms[GPIO_UPDATE_PINS_MAX];
+uint8_t gpio_last_state[GPIO_UPDATE_PINS_MAX];
+
+void GPIOInit()
+{
+    bzero(gpio_subscribers, sizeof(gpio_subscribers));
+    bzero(gpio_last_ms, sizeof(gpio_last_ms));
+    bzero(gpio_last_state, sizeof(gpio_last_state));
+    bzero(gpio_updated, sizeof(gpio_updated));
+    need_gpio_all = 0;
+}
 
 void sendPowerOnMessage()
 {
     *(UDPProcessor::getUDPPtr()) = CMD_POWERON;
     UDPProcessor::tx(1);
+}
+
+void GPIOUpdate(int i)
+{
+    uint8_t newState = digitalRead(i);
+    unsigned long newMs = millis();
+
+    if(newState != gpio_last_state[i])
+    {
+        unsigned long differenceMs = newMs - gpio_last_ms[i];
+        gpio_last_ms[i] = newMs;
+        gpio_last_state[i] = newState;
+        uint8_t* data = UDPProcessor::getUDPPtr();
+        data[0] = CMD_GPIO_SEND_DIGITAL_CHANGE;
+        data[1] = i;
+        data[2] = newState;
+        uint32_t_uint8_t_gpio uu;
+        uu.intval = differenceMs;
+        for(unsigned i = 0; i < sizeof(uint32_t); i++)
+        {
+            data[3 + i] = uu.charval[i];
+        }
+        UDPProcessor::tx(3 + sizeof(uint32_t));
+    }
+
 }
 
 void sendACK()
@@ -52,42 +85,53 @@ bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
     }
     else if(data[0] == CMD_GPIO_DIGITALREAD && len >= 2)
     {
-        uint8_t res = digitalRead(data[1]);
+        uint8_t pin = data[1];
+        uint8_t res = digitalRead(pin);
         *(UDPProcessor::getUDPPtr()) = CMD_GPIO_DIGITALREAD_RESPONSE;
-        *(UDPProcessor::getUDPPtr() + 1) = data[1];
+        *(UDPProcessor::getUDPPtr() + 1) = pin;
         *(UDPProcessor::getUDPPtr() + 2) = res;
         UDPProcessor::tx(3);
         return(1);
     }
     else if(data[0] == CMD_GPIO_ANALOGREAD && len >= 2)
     {
-        int res = analogRead(data[1]);
+        uint8_t pin = data[1];
+        int res = analogRead(pin);
         *(UDPProcessor::getUDPPtr()) = CMD_GPIO_ANALOGREAD_RESPONSE;
-        *(UDPProcessor::getUDPPtr() + 1) = data[1];
+        *(UDPProcessor::getUDPPtr() + 1) = pin;
         *(UDPProcessor::getUDPPtr() + 2) = res / 4;
         UDPProcessor::tx(3);
         return(1);
     }
-    else if(data[0] == CMD_GPIO_UPDATE_LIST && len >= 2)
+    else if(data[0] == CMD_GPIO_SUBSCRIBE && len >= 2)
     {
-        if(data[1] >= GPIO_UPDATE_PINS_MAX)
+        uint8_t pin = data[1];
+        if(pin > GPIO_UPDATE_MAX_PIN)
             return(1);
-        gpio_update_pins_n = data[1];
-        for(uint8_t i = 0; i < gpio_update_pins_n; i++)
+        if(gpio_subscribers[pin] < 255)
+            gpio_subscribers[pin]++;
+
+        if(gpio_subscribers[pin] == 1)
         {
-            pinMode(data[2 + i], INPUT_PULLUP);
-            gpio_update_pins[i] = data[2 + i];
-            last_ms[i] = 0;
-            last_state[i] = -1;
+            pinMode(pin, INPUT_PULLUP);
+            gpio_last_ms[pin] = 0;
+            gpio_last_state[pin] = -1;
         }
+
+        GPIOUpdate(pin);
+
+        return(1);
+    }
+    else if(data[0] == CMD_GPIO_UNSUBSCRIBE && len >= 2)
+    {
+        uint8_t pin = data[1];
+        if(pin > GPIO_UPDATE_MAX_PIN)
+            return(1);
+        if(gpio_subscribers[pin] > 0)
+            gpio_subscribers[pin]--;
         return(1);
     }
     else if(data[0] == CMD_GPIO_REFRESH)
-    {
-        need_gpio_all = 1;
-        return(1);
-    }
-    else if(data[0] == CMD_GPIO_SEND_DIGITAL_CHANGE_INITIAL && len >= 1)
     {
         need_gpio_all = 1;
         return(1);
@@ -108,29 +152,10 @@ bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
 
 void UDPGPIOIteration()
 {
-    
-    for(unsigned i = 0; i < gpio_update_pins_n; i++)
+    for(unsigned i = 0; i < GPIO_UPDATE_MAX_PIN; i++)
     {
-        uint8_t newState = digitalRead(gpio_update_pins[i]);
-        unsigned long newMs = millis();
-
-        if(newState != last_state[i] || need_gpio_all)
-        {
-            unsigned long differenceMs = newMs - last_ms[i];
-            last_ms[i] = newMs;
-            last_state[i] = newState;
-            uint8_t* data = UDPProcessor::getUDPPtr();
-            data[0] = CMD_GPIO_SEND_DIGITAL_CHANGE;
-            data[1] = gpio_update_pins[i];
-            data[2] = newState;
-            uint32_t_uint8_t_gpio uu;
-            uu.intval = differenceMs;
-            for(unsigned i = 0; i < sizeof(uint32_t); i++)
-            {
-                data[3 + i] = uu.charval[i];
-            }
-            UDPProcessor::tx(3 + sizeof(uint32_t));
-        }
+        if(gpio_subscribers[i] == 0)
+            continue;
+        GPIOUpdate(i);
     }
-    need_gpio_all = false;
 }

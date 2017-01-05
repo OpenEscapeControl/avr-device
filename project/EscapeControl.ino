@@ -23,6 +23,7 @@ void setup()
 {
     p.begin();
     delay(100);
+    GPIOInit();
     sendPowerOnMessage();
 }
 
