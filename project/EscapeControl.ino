@@ -1,5 +1,6 @@
 #include "UDPProcessor.h"
 #include "CapSense.h"
+#include "UDPKeypad.h"
 #include "UDPGPIO.h"
 #include "UDPCapSense.h"
 #include "OneWire.h"
@@ -20,6 +21,8 @@ void rxCallback(unsigned len, const char *data)
     if(processCommandOneWire((uint8_t*) data, len) == 1)
         return;
     if(processCommandDFPlayer((uint8_t*) data, len) == 1)
+        return;
+    if(processCommandUDPKeypad((uint8_t*) data, len) == 1)
         return;
 }
 

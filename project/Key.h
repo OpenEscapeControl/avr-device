@@ -32,9 +32,6 @@
 #ifndef KEY_H
 #define KEY_H
 
-// Arduino versioning.
-#include "ard_env.h"
-
 #define OPEN LOW
 #define CLOSED HIGH
 
@@ -49,12 +46,12 @@ public:
 	char kchar;
 	int kcode;
 	KeyState kstate;
-	boolean stateChanged;
+	bool stateChanged;
 
 	// methods
 	Key();
 	Key(char userKeyChar);
-	void key_update(char userKeyChar, KeyState userState, boolean userStatus);
+	void key_update(char userKeyChar, KeyState userState, bool userStatus);
 
 private:
 

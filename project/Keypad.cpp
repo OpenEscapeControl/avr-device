@@ -31,15 +31,17 @@
 */
 #include "Keypad.h"
 
+Keypad::Keypad()
+{
+}
+
 // <<constructor>> Allows custom keymap, pin configuration, and keypad sizes.
-Keypad::Keypad(char *userKeymap, byte *row, byte *col, byte numRows, byte numCols, bool pullup) {
+Keypad::Keypad(byte *row, byte *col, byte numRows, byte numCols, bool pullup) {
     pullup_ = pullup;
     rowPins = row;
     columnPins = col;
     sizeKpd.rows = numRows;
     sizeKpd.columns = numCols;
-
-    begin(userKeymap);
 
     setDebounceTime(10);
     setHoldTime(500);
@@ -47,11 +49,6 @@ Keypad::Keypad(char *userKeymap, byte *row, byte *col, byte numRows, byte numCol
 
     startTime = 0;
     single_key = false;
-}
-
-// Let the user define a keymap - assume the same row/column count as defined in constructor
-void Keypad::begin(char *userKeymap) {
-    keymap = userKeymap;
 }
 
 // Returns a single key only. Retained for backwards compatibility.
@@ -119,9 +116,9 @@ bool Keypad::updateList() {
     // Add new keys to empty slots in the key list.
     for (byte r=0; r<sizeKpd.rows; r++) {
         for (byte c=0; c<sizeKpd.columns; c++) {
-            boolean button = bitRead(bitMap[r],c);
-            char keyChar = keymap[r * sizeKpd.columns + c];
+            bool button = bitRead(bitMap[r],c);
             int keyCode = r * sizeKpd.columns + c;
+            char keyChar = keyCode;
             int idx = findInList (keyCode);
             // Key is already on the list so set its next state.
             if (idx > -1)	{
@@ -152,7 +149,7 @@ bool Keypad::updateList() {
 
 // Private
 // This function is a state machine but is also used for debouncing the keys.
-void Keypad::nextKeyState(byte idx, boolean button) {
+void Keypad::nextKeyState(byte idx, bool button) {
     key[idx].stateChanged = false;
 
     switch (key[idx].kstate) {
@@ -232,40 +229,6 @@ bool Keypad::keyStateChanged() {
 // of bytes in the key list divided by the number of bytes in a Key object.
 byte Keypad::numKeys() {
     return sizeof(key)/sizeof(Key);
-}
-
-void Keypad::UDPIteration()
-{
-    static unsigned long last_update_ms = 0;
-    unsigned long current_ms = millis();
-
-    if(current_ms - last_update_ms > KEYPAD_UPDATE_MS)
-    {
-        last_update_ms = current_ms;
-        uint8_t* data = UDPProcessor::getUDPPtr();
-
-        if(getKeys())
-        {
-            data[0] = CMD_KEYPAD_SEND_KEYS;
-
-            unsigned j = 2, m = 0;
-
-            for(unsigned i = 0; i < LIST_MAX; i++)
-            {
-                if (key[i].stateChanged)
-                {
-                    data[j] = key[i].kchar;
-                    data[j + 1] = key[i].kstate;
-                    j += 2;
-                    m++;
-                }
-            }
-
-            data[1] = m;
-            if(m > 0)
-                UDPProcessor::tx(2 * m + 2);
-        }
-    }
 }
 
 // Minimum debounceTime is 1 mS. Any lower *will* slow down the loop().
