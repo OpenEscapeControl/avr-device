@@ -17,6 +17,8 @@
 #define CMD_GPIO_REFRESH			0xC9
 #define CMD_GPIO_TONE				0xCA
 #define CMD_GPIO_NOTONE				0xCB
+#define CMD_GPIO_DIGITALREADLIST		0xCC
+#define CMD_GPIO_DIGITALREADLIST_RESPONSE	0xCD
 
 typedef union
 {

@@ -103,6 +103,20 @@ bool processCommandUDPGPIO(uint8_t* data, uint8_t len)
         analogWrite(data[1], data[2]);
         return(1);
     }
+    else if(data[0] == CMD_GPIO_DIGITALREADLIST)
+    {
+        uint8_t len = data[1];
+        uint8_t* pins = data + 2;
+        uint8_t* values = data + 2 + len;
+        for(uint8_t i = 0; i < len; i++)
+        {
+            pinMode(pins[i], INPUT_PULLUP);
+            values[i] = digitalRead(pins[i]);
+        }
+        *(UDPProcessor::getUDPPtr()) = CMD_GPIO_DIGITALREADLIST_RESPONSE;
+        UDPProcessor::tx(2 + 2 * len);
+        return(1);
+    }
     return(0);
 }
 
