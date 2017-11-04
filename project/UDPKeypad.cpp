@@ -23,7 +23,7 @@ bool processCommandUDPKeypad(uint8_t* data, uint8_t len)
         for(uint8_t i = 0; i < col_n; i++) col_pins[id][i] = data[14 + i];
         keypads[id] = Keypad(row_pins[id], col_pins[id], row_n, col_n);
     }
-    else if(data[0] == CMD_KEYPAD_REQUEST && len >= 3)
+    else if(data[0] == CMD_KEYPAD_REQUEST && len >= 2)
     {
         data[0] = CMD_KEYPAD_RESPONSE;
         Keypad* kp = &(keypads[data[1]]);
