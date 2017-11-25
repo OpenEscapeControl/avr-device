@@ -24,6 +24,9 @@ void rxCallback(unsigned len, const char *data)
         return;
     if(processCommandUDPKeypad((uint8_t*) data, len) == 1)
         return;
+
+    // return unknown command to the sender
+    UDPProcessor::tx(len);
 }
 
 void setup()
