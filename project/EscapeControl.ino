@@ -1,7 +1,9 @@
+#include <TM1637Display.h>
 #include "UDPProcessor.h"
 #include "CapSense.h"
 #include "UDPKeypad.h"
 #include "UDPGPIO.h"
+#include "UDPTM1637.h"
 #include "UDPCapSense.h"
 #include "OneWire.h"
 #include "SoftwareSerial.h"
@@ -23,6 +25,8 @@ void rxCallback(unsigned len, const char *data)
     if(processCommandDFPlayer((uint8_t*) data, len) == 1)
         return;
     if(processCommandUDPKeypad((uint8_t*) data, len) == 1)
+        return;
+    if(processCommandTM1637((uint8_t*) data, len) == 1)
         return;
 
     // return unknown command to the sender
