@@ -18,8 +18,6 @@ bool processCommandTM1637(uint8_t* data, uint8_t len)
         uint8_t dio_n = data[3];
         displays[id].init(clk_n, dio_n);
 
-//        UDPProcessor::tx(len);
-
         return(1);
     }
     else if(data[0] == CMD_TM1637_DISPLAYDEC)
@@ -33,7 +31,6 @@ bool processCommandTM1637(uint8_t* data, uint8_t len)
             digits[i] = displays[id].encodeDigit(data[2 + i]);
 
         displays[id].setSegments(digits);
-//        UDPProcessor::tx(len);
 
         return(1);
     }
