@@ -1,3 +1,3 @@
 [submodule "TM1637"]
 	path = TM1637
-	url = https://github.com/avishorp/TM1637.git
+	url = git@bitbucket.org:escape-control/tm1637.git
