@@ -10,7 +10,7 @@ bool processCommandTM1637(uint8_t* data, uint8_t len)
 {
     if(len < 2 || data[1] >= MAX_TM1637_N)
         return(0);
-    if(data[0] == CMD_TM1637_INIT && len >= 3)
+    if(data[0] == CMD_TM1637_INIT)
     {
         // proto: tm_n clk_pin dio_pin
         uint8_t id = data[1];
@@ -22,7 +22,7 @@ bool processCommandTM1637(uint8_t* data, uint8_t len)
 
         return(1);
     }
-    else if(data[0] == CMD_TM1637_DISPLAYDEC && len >= 2)
+    else if(data[0] == CMD_TM1637_DISPLAYDEC)
     {
         // proto: tm_n digit1 digit2 digit3 digit4
         uint8_t id = data[1];
