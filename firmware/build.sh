@@ -27,11 +27,11 @@ function build_one()
     N=$1
     filename="d$(Ntoname $N).hex"
     echo "Device id: $N, $filename"
-    echo "int device_n = $N;" > ../project/device_n.cpp
-    make -C ../project clean
-    rm -rf ../project/build*
-    make -C ../project
-    cp ../project/build/project.hex $filename
+    echo "int device_n = $N;" > ../EscapeControl/examples/EscapeControl/device_n.cpp
+    make -C ../EscapeControl/examples/EscapeControl clean
+    rm -rf ../EscapeControl/examples/EscapeControl/build*
+    make -C ../EscapeControl/examples/EscapeControl
+    cp ../EscapeControl/examples/EscapeControl/build/EscapeControl.hex $filename
 }
 
 device_end=$2
